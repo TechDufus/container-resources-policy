@@ -51,6 +51,9 @@ func validateAndAdjustContainerResourceLimit(container *corev1.Container, resour
 		if err != nil {
 			return false, fmt.Errorf("invalid %s limit", resourceName)
 		}
+		if resourceConfig.MaxLimit.IsZero() && resourceConfig.DefaultLimit.IsZero() && resourceConfig.DefaultRequest.IsZero() {
+			return false, nil
+		}
 		if resourceLimit.Cmp(resourceConfig.MaxLimit) > 0 {
 			return false, fmt.Errorf("%s limit '%s' exceeds the max allowed value '%s'", resourceName, resourceLimit.String(), resourceConfig.MaxLimit.String())
 		}

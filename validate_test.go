@@ -12,6 +12,8 @@ import (
 )
 
 func TestContainerIsRequiredToHaveLimits(t *testing.T) {
+	zeroCore := resource.MustParse("0")
+	zeroGi := resource.MustParse("0Gi")
 	oneCore := resource.MustParse("1")
 	oneGi := resource.MustParse("1Gi")
 	oneCoreCpuQuantity := apimachinery_pkg_api_resource.Quantity("1")
@@ -340,6 +342,39 @@ func TestContainerIsRequiredToHaveLimits(t *testing.T) {
 					"memory": &oneGiMemoryQuantity,
 				},
 			}, true, ""},
+		{"resources with 0 limits and requests", corev1.Container{
+			Resources: &corev1.ResourceRequirements{
+				Limits: map[string]*apimachinery_pkg_api_resource.Quantity{
+					"cpu":    &oneCoreCpuQuantity,
+					"memory": &oneGiMemoryQuantity,
+				},
+				Requests: map[string]*apimachinery_pkg_api_resource.Quantity{
+					"cpu":    &twoCoreCpuQuantity,
+					"memory": &twoGiMemoryQuantity,
+				},
+			}},
+			Settings{
+				Cpu: &ResourceConfiguration{
+					DefaultRequest: zeroCore,
+					DefaultLimit:   zeroCore,
+					MaxLimit:       zeroCore,
+				},
+				Memory: &ResourceConfiguration{
+					DefaultRequest: zeroGi,
+					DefaultLimit:   zeroGi,
+					MaxLimit:       zeroGi,
+				},
+				IgnoreImages: []string{},
+			}, &corev1.ResourceRequirements{
+				Requests: map[string]*apimachinery_pkg_api_resource.Quantity{
+					"cpu":    &twoCoreCpuQuantity,
+					"memory": &twoGiMemoryQuantity,
+				},
+				Limits: map[string]*apimachinery_pkg_api_resource.Quantity{
+					"cpu":    &oneCoreCpuQuantity,
+					"memory": &oneGiMemoryQuantity,
+				},
+			}, false, ""},
 	}
 
 	for _, test := range tests {
